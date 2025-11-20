@@ -25,7 +25,7 @@ public class SessionFormDialog extends JDialog {
         setLayout(new BorderLayout());
         getContentPane().setBackground(ThemePalette.OBSIDIAN);
         JPanel content = new JPanel(new GridBagLayout());
-        content.setBorder(BorderFactory.createEmptyBorder(16, 24, 16, 24));
+        content.setBorder(BorderFactory.createEmptyBorder(24, 30, 24, 30));
         content.setBackground(ThemePalette.PANEL);
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -34,6 +34,14 @@ public class SessionFormDialog extends JDialog {
         gbc.insets = new Insets(6, 6, 6, 6);
         gbc.anchor = GridBagConstraints.WEST;
 
+        JLabel heading = new JLabel("Nouvelle session");
+        heading.setFont(ThemePalette.subtitleFont().deriveFont(Font.BOLD, 20f));
+        heading.setForeground(ThemePalette.TEXT_PRIMARY);
+        gbc.gridwidth = 2;
+        content.add(heading, gbc);
+
+        gbc.gridy++;
+        gbc.gridwidth = 1;
         addLabel(content, gbc, "Zone");
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -79,24 +87,15 @@ public class SessionFormDialog extends JDialog {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         panel.setBackground(ThemePalette.NIGHT);
 
-        JButton cancel = themedButton("Annuler");
+        JButton cancel = UiComponents.ghostButton("Annuler");
         cancel.addActionListener(e -> dispose());
 
-        JButton save = themedButton("Enregistrer");
+        JButton save = UiComponents.primaryButton("Enregistrer");
         save.addActionListener(e -> onSave());
 
         panel.add(cancel);
         panel.add(save);
         return panel;
-    }
-
-    private JButton themedButton(String label) {
-        JButton button = new JButton(label);
-        button.setBackground(ThemePalette.GOLD);
-        button.setForeground(Color.DARK_GRAY);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(8, 18, 8, 18));
-        return button;
     }
 
     private void addLabel(JPanel panel, GridBagConstraints gbc, String text) {

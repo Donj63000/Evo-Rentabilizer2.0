@@ -5,6 +5,7 @@ public record ZoneStatsRecord(
         int sessionCount,
         long totalMinutes,
         long totalKamas,
-        double averageKamasPerHour
+        double averageKamasPerHour,
+        String lastSessionIso
 ) {
 }

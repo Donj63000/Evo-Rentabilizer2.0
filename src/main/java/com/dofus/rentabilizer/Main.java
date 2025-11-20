@@ -1,10 +1,12 @@
 package com.dofus.rentabilizer;
 
 import com.dofus.rentabilizer.cli.AddSessionCommand;
+import com.dofus.rentabilizer.cli.DeleteSessionCommand;
 import com.dofus.rentabilizer.cli.HistoryCommand;
 import com.dofus.rentabilizer.cli.StatsCommand;
 import com.dofus.rentabilizer.db.Database;
 import com.dofus.rentabilizer.ui.MainWindow;
+import com.dofus.rentabilizer.ui.ThemePalette;
 import picocli.CommandLine;
 
 import javax.swing.*;
@@ -17,13 +19,15 @@ import javax.swing.*;
         subcommands = {
                 AddSessionCommand.class,
                 StatsCommand.class,
-                HistoryCommand.class
+                HistoryCommand.class,
+                DeleteSessionCommand.class
         }
 )
 public final class Main implements Runnable {
 
     public static void main(String[] args) {
         Database.init();
+        ThemePalette.applyGlobalFont();
         if (args != null && args.length > 0) {
             int exitCode = new CommandLine(new Main()).execute(args);
             System.exit(exitCode);

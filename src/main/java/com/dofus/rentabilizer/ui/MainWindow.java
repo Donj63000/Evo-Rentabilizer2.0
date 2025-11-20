@@ -12,24 +12,47 @@ public class MainWindow extends JFrame {
     private static final String CARD_HISTORY = "history";
     private static final String CARD_STATS = "stats";
     private static final String CARD_OPTIONS = "options";
+    private static final String CARD_FARM = "farm";
 
     private final SessionService sessionService = new SessionService();
     private final SessionHistoryPanel historyPanel = new SessionHistoryPanel();
     private final ZoneStatsPanel statsPanel = new ZoneStatsPanel();
+    private final ModeFarmPanel modeFarmPanel =
+            new ModeFarmPanel(sessionService, this::showMenu, this::handleSessionSaved);
     private final JPanel cardPanel = new JPanel(new CardLayout());
 
     public MainWindow() {
         super("Dofus Retro Rentabilizer");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(1120, 700));
+        setMinimumSize(new Dimension(1180, 720));
         setLocationRelativeTo(null);
         setContentPane(buildRoot());
         showMenu();
     }
 
     private JComponent buildRoot() {
-        JPanel root = new JPanel(new BorderLayout());
-        root.setBackground(ThemePalette.NIGHT);
+        JPanel root = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setPaint(new GradientPaint(0, 0, ThemePalette.NIGHT, 0, getHeight(), ThemePalette.OBSIDIAN));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                Image texture = ThemePalette.backgroundTexture();
+                if (texture != null) {
+                    Composite old = g2.getComposite();
+                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.08f));
+                    for (int x = 0; x < getWidth(); x += texture.getWidth(null)) {
+                        for (int y = 0; y < getHeight(); y += texture.getHeight(null)) {
+                            g2.drawImage(texture, x, y, null);
+                        }
+                    }
+                    g2.setComposite(old);
+                }
+                g2.dispose();
+            }
+        };
+        root.setOpaque(false);
         root.add(buildHeader(), BorderLayout.NORTH);
         root.add(buildCards(), BorderLayout.CENTER);
         root.add(buildFooter(), BorderLayout.SOUTH);
@@ -37,29 +60,43 @@ public class MainWindow extends JFrame {
     }
 
     private JComponent buildHeader() {
-        JPanel header = new JPanel() {
+        JPanel header = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                GradientPaint paint = new GradientPaint(
-                        0, 0, ThemePalette.JADE,
-                        getWidth(), getHeight(), ThemePalette.EMERALD);
-                g2.setPaint(paint);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setPaint(new GradientPaint(
+                        0, 0, new Color(12, 34, 40),
+                        getWidth(), getHeight(), ThemePalette.JADE));
                 g2.fillRect(0, 0, getWidth(), getHeight());
+                GradientPaint highlight = new GradientPaint(
+                        0, 0, new Color(255, 255, 255, 60),
+                        0, getHeight() / 2f, new Color(255, 255, 255, 0));
+                g2.setPaint(highlight);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setColor(new Color(255, 216, 120, 90));
+                g2.fillRoundRect(20, getHeight() - 40, getWidth() - 40, 30, 60, 60);
+                g2.setColor(new Color(0, 0, 0, 90));
+                g2.fillRect(0, getHeight() - 6, getWidth(), 6);
+                g2.dispose();
             }
         };
-        header.setPreferredSize(new Dimension(100, 150));
-        header.setLayout(new BorderLayout());
+        header.setPreferredSize(new Dimension(100, 160));
         header.setBorder(BorderFactory.createEmptyBorder(16, 40, 16, 40));
 
-        JLabel title = new JLabel("Rentabilizer 2.0");
-        title.setFont(ThemePalette.titleFont());
-        title.setForeground(ThemePalette.TEXT_PRIMARY);
+        GradientTitleLabel title = new GradientTitleLabel("Rentabilizer 2.0");
+        title.setFont(ThemePalette.titleFont().deriveFont(Font.BOLD, 46f));
+        title.setGradient(new Color(255, 240, 209), ThemePalette.DARK_GOLD);
+        title.setShadowColor(new Color(0, 0, 0, 140));
+        title.setShadowOffset(4);
 
         JLabel subtitle = new JLabel("Guilde Evolution • Serveur Boune • Dofus 1.29");
         subtitle.setFont(ThemePalette.subtitleFont());
         subtitle.setForeground(ThemePalette.TEXT_SECONDARY);
+
+        JLabel tagline = new JLabel("Optimisez chaque session de farm grace a vos propres donnees");
+        tagline.setFont(ThemePalette.bodyFont());
+        tagline.setForeground(ThemePalette.TEXT_PRIMARY);
 
         JPanel texts = new JPanel();
         texts.setOpaque(false);
@@ -67,7 +104,29 @@ public class MainWindow extends JFrame {
         texts.add(title);
         texts.add(Box.createVerticalStrut(6));
         texts.add(subtitle);
+        texts.add(Box.createVerticalStrut(6));
+        texts.add(tagline);
         header.add(texts, BorderLayout.WEST);
+
+        RoundedPanel heroChip = new RoundedPanel(30);
+        heroChip.setShadowEnabled(false);
+        heroChip.setGradient(new Color(245, 208, 116, 220), new Color(236, 175, 73, 220));
+        heroChip.setBorder(BorderFactory.createEmptyBorder(10, 18, 10, 18));
+        JLabel heroText = new JLabel("Optimisation temps réel • Données 100% locales");
+        heroText.setForeground(new Color(40, 30, 16));
+        heroText.setFont(ThemePalette.subtitleFont().deriveFont(Font.BOLD, 15f));
+        heroChip.add(heroText);
+
+        JPanel center = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        center.setOpaque(false);
+        center.add(heroChip);
+        header.add(center, BorderLayout.CENTER);
+
+        Icon logo = ThemePalette.logoIcon(180, 120);
+        if (logo != null) {
+            JLabel logoLabel = new JLabel(logo);
+            header.add(logoLabel, BorderLayout.EAST);
+        }
 
         return header;
     }
@@ -79,6 +138,7 @@ public class MainWindow extends JFrame {
         cardPanel.add(buildHistoryScreen(), CARD_HISTORY);
         cardPanel.add(buildStatsScreen(), CARD_STATS);
         cardPanel.add(buildPlaceholderScreen("Options", "Reglages et exports arrives tres prochainement."), CARD_OPTIONS);
+        cardPanel.add(modeFarmPanel, CARD_FARM);
         return cardPanel;
     }
 
@@ -86,70 +146,47 @@ public class MainWindow extends JFrame {
         JPanel screen = new JPanel(new GridBagLayout());
         screen.setOpaque(false);
 
+        RoundedPanel gridWrapper = new RoundedPanel(30);
+        gridWrapper.setFill(new Color(22, 32, 42, 220));
+        gridWrapper.setLayout(new BorderLayout());
+        gridWrapper.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+
         JPanel grid = new JPanel(new GridLayout(2, 2, 28, 28));
         grid.setOpaque(false);
-        grid.add(createMenuCard("Mode farm", "Lancer une session instantanement", this::openSessionDialog));
-        grid.add(createMenuCard("Infos zones", "Classement des meilleures zones", this::showStats));
-        grid.add(createMenuCard("Historique des farm", "Consultez vos 25 dernieres sessions", this::showHistory));
-        grid.add(createMenuCard("Options", "Theme, export, sauvegardes", () -> showCard(CARD_OPTIONS)));
+        grid.add(new MenuCard("Mode farm", "Lancer une session instantanement", "\u2694", this::showFarm));
+        grid.add(new MenuCard("Infos zones", "Classement des meilleures zones", "\u2699", this::showStats));
+        grid.add(new MenuCard("Historique des farm", "Consultez vos 25 dernieres sessions", "\u23F2", this::showHistory));
+        grid.add(new MenuCard("Options", "Theme, export, sauvegardes", "\u2692", () -> showCard(CARD_OPTIONS)));
 
-        screen.add(grid);
+        JLabel callout = new JLabel("Choisissez un mode pour commencer votre session");
+        callout.setFont(ThemePalette.subtitleFont().deriveFont(Font.BOLD, 18f));
+        callout.setForeground(ThemePalette.TEXT_PRIMARY);
+        callout.setBorder(BorderFactory.createEmptyBorder(0, 6, 18, 0));
+        gridWrapper.add(callout, BorderLayout.NORTH);
+        gridWrapper.add(grid, BorderLayout.CENTER);
+        screen.add(gridWrapper);
         return screen;
     }
 
-    private JPanel createMenuCard(String title, String subtitle, Runnable action) {
-        JPanel card = new JPanel();
-        card.setLayout(new BorderLayout());
-        card.setPreferredSize(new Dimension(240, 190));
-        card.setBackground(new Color(32, 49, 57));
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(71, 108, 97), 2, true),
-                BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
-        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(ThemePalette.subtitleFont().deriveFont(Font.BOLD, 18f));
-        titleLabel.setForeground(ThemePalette.TEXT_PRIMARY);
-
-        JLabel subtitleLabel = new JLabel("<html><div style='width:180px;'>" + subtitle + "</div></html>");
-        subtitleLabel.setFont(ThemePalette.bodyFont());
-        subtitleLabel.setForeground(ThemePalette.TEXT_SECONDARY);
-
-        card.add(titleLabel, BorderLayout.NORTH);
-        card.add(subtitleLabel, BorderLayout.CENTER);
-
-        card.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                card.setBackground(new Color(45, 68, 80));
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                card.setBackground(new Color(32, 49, 57));
-            }
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                action.run();
-            }
-        });
-
-        return card;
-    }
-
     private JComponent buildHistoryScreen() {
+        JPanel container = new JPanel(new BorderLayout());
+        container.setOpaque(false);
+        container.add(buildHistoryToolbar(), BorderLayout.NORTH);
+        container.add(historyPanel, BorderLayout.CENTER);
         return buildContentScreen("Historique des sessions",
                 "Suivez vos derniers runs en detail et analysez les ratios K/h.",
-                historyPanel,
+                container,
                 null);
     }
 
     private JComponent buildStatsScreen() {
+        JPanel container = new JPanel(new BorderLayout());
+        container.setOpaque(false);
+        container.add(buildStatsToolbar(), BorderLayout.NORTH);
+        container.add(statsPanel, BorderLayout.CENTER);
         return buildContentScreen("Informations sur les zones",
                 "Classement dynamique des zones en fonction de votre experience.",
-                statsPanel,
+                container,
                 null);
     }
 
@@ -166,9 +203,10 @@ public class MainWindow extends JFrame {
         placeholder.setOpaque(false);
         placeholder.add(text, BorderLayout.CENTER);
 
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(ThemePalette.PANEL);
-        card.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        RoundedPanel card = new RoundedPanel(22);
+        card.setFill(new Color(30, 40, 52));
+        card.setLayout(new BorderLayout());
+        card.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
         card.add(placeholder, BorderLayout.CENTER);
 
         return buildContentScreen(title, "Cette section arrive bientot.", card, null);
@@ -178,14 +216,12 @@ public class MainWindow extends JFrame {
         JPanel container = new JPanel(new BorderLayout());
         container.setOpaque(false);
 
-        JPanel topBar = new JPanel(new BorderLayout());
-        topBar.setBackground(new Color(26, 38, 46));
+        RoundedPanel topBar = new RoundedPanel(24);
+        topBar.setFill(new Color(30, 44, 53, 235));
+        topBar.setLayout(new BorderLayout());
         topBar.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
 
-        JButton backButton = new JButton("← Retour au menu");
-        backButton.setBackground(ThemePalette.GOLD);
-        backButton.setForeground(Color.DARK_GRAY);
-        backButton.setFocusPainted(false);
+        JButton backButton = UiComponents.ghostButton("< Retour au menu");
         backButton.addActionListener(e -> {
             if (backAction != null) {
                 backAction.run();
@@ -211,8 +247,9 @@ public class MainWindow extends JFrame {
         topBar.add(backButton, BorderLayout.WEST);
         topBar.add(titles, BorderLayout.CENTER);
 
-        JPanel bodyWrapper = new JPanel(new BorderLayout());
-        bodyWrapper.setBackground(ThemePalette.PANEL);
+        RoundedPanel bodyWrapper = new RoundedPanel(26);
+        bodyWrapper.setFill(new Color(24, 32, 40, 235));
+        bodyWrapper.setLayout(new BorderLayout());
         bodyWrapper.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
         bodyWrapper.add(content, BorderLayout.CENTER);
 
@@ -220,6 +257,53 @@ public class MainWindow extends JFrame {
         container.add(bodyWrapper, BorderLayout.CENTER);
 
         return container;
+    }
+
+    private JComponent buildHistoryToolbar() {
+        RoundedPanel panel = new RoundedPanel(20);
+        panel.setGradient(new Color(46, 78, 86, 200), new Color(35, 52, 62, 220));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
+        panel.setLayout(new BorderLayout(12, 0));
+        JLabel info = new JLabel("Conseil: ajoute une session apres chaque run pour garder un historique fiable.");
+        info.setForeground(ThemePalette.TEXT_PRIMARY);
+        panel.add(info, BorderLayout.CENTER);
+        JButton addSession = UiComponents.primaryButton("Nouvelle session");
+        addSession.addActionListener(e -> openSessionDialog());
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actions.setOpaque(false);
+        JButton editSession = UiComponents.ghostButton("Modifier");
+        JButton deleteSession = UiComponents.ghostButton("Supprimer");
+        editSession.setEnabled(false);
+        deleteSession.setEnabled(false);
+
+        historyPanel.addSelectionListener(() -> {
+            boolean hasSelection = historyPanel.getSelectedSession() != null;
+            editSession.setEnabled(hasSelection);
+            deleteSession.setEnabled(hasSelection);
+        });
+
+        editSession.addActionListener(e -> openEditDialog());
+        deleteSession.addActionListener(e -> deleteSelectedSession());
+
+        actions.add(addSession);
+        actions.add(editSession);
+        actions.add(deleteSession);
+        panel.add(actions, BorderLayout.EAST);
+        return panel;
+    }
+
+    private JComponent buildStatsToolbar() {
+        RoundedPanel panel = new RoundedPanel(20);
+        panel.setGradient(new Color(54, 85, 96, 200), new Color(38, 60, 70, 220));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
+        panel.setLayout(new BorderLayout(12, 0));
+        JLabel info = new JLabel("Classement calcule uniquement sur vos donnees enregistrées.");
+        info.setForeground(ThemePalette.TEXT_PRIMARY);
+        panel.add(info, BorderLayout.WEST);
+        JButton refresh = UiComponents.ghostButton("Actualiser");
+        refresh.addActionListener(e -> refreshData());
+        panel.add(refresh, BorderLayout.EAST);
+        return panel;
     }
 
     private JComponent buildFooter() {
@@ -238,6 +322,39 @@ public class MainWindow extends JFrame {
         dialog.setVisible(true);
     }
 
+    private void openEditDialog() {
+        var session = historyPanel.getSelectedSession();
+        if (session == null) {
+            return;
+        }
+        SessionEditDialog dialog = new SessionEditDialog(this, sessionService, session, this::refreshData);
+        dialog.setVisible(true);
+    }
+
+    private void deleteSelectedSession() {
+        var session = historyPanel.getSelectedSession();
+        if (session == null) {
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+                String.format("Supprimer la session #%d (%s) ?", session.id(), session.zoneName()),
+                "Confirmer la suppression",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            sessionService.deleteSession(session.id());
+            refreshData();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Impossible de supprimer la session: " + e.getMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void showHistory() {
         refreshData();
         showCard(CARD_HISTORY);
@@ -246,6 +363,11 @@ public class MainWindow extends JFrame {
     private void showStats() {
         refreshData();
         showCard(CARD_STATS);
+    }
+
+    private void showFarm() {
+        modeFarmPanel.prepareForNewSession();
+        showCard(CARD_FARM);
     }
 
     private void showMenu() {
@@ -267,5 +389,9 @@ public class MainWindow extends JFrame {
                     "Erreur",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private void handleSessionSaved() {
+        refreshData();
     }
 }
