@@ -4,6 +4,8 @@ import com.dofus.rentabilizer.domain.SessionRecord;
 import com.dofus.rentabilizer.service.SessionService;
 import picocli.CommandLine;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @CommandLine.Command(
@@ -11,6 +13,7 @@ import java.util.List;
         description = "Liste les dernieres sessions enregistrees"
 )
 public class HistoryCommand implements Runnable {
+    private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @CommandLine.Option(names = {"-n", "--limit"}, defaultValue = "20", description = "Nombre de lignes a afficher")
     private int limit;
@@ -26,15 +29,16 @@ public class HistoryCommand implements Runnable {
 
         try {
             List<SessionRecord> sessions = sessionService.latestSessions(limit);
-            System.out.printf("%-5s %-28s %-19s %-19s %8s %12s %8s%n",
-                    "ID", "Zone", "Debut", "Fin", "Min", "Kamas", "K/h");
-            System.out.println("-----------------------------------------------------------------------------------------------");
+            System.out.printf("%-5s %-24s %-10s %-19s %-19s %8s %12s %8s%n",
+                    "ID", "Zone", "Pos", "Debut", "Fin", "Min", "Kamas", "K/h");
+            System.out.println("----------------------------------------------------------------------------------------------------------------");
             for (SessionRecord session : sessions) {
-                System.out.printf("%-5d %-28s %-19s %-19s %8d %12d %8.0f%n",
+                System.out.printf("%-5d %-24s %-10s %-19s %-19s %8d %12d %8.0f%n",
                         session.id(),
                         session.zoneName(),
-                        session.startedAtIso(),
-                        session.endedAtIso(),
+                        session.position() == null ? "-" : session.position(),
+                        formatDate(session.startedAtIso()),
+                        formatDate(session.endedAtIso()),
                         session.durationMinutes(),
                         session.kamasTotal(),
                         session.kamasPerHour());
@@ -42,6 +46,17 @@ public class HistoryCommand implements Runnable {
         } catch (Exception e) {
             throw new CommandLine.ExecutionException(new CommandLine(this),
                     "Impossible de recuperer l'historique: " + e.getMessage(), e);
+        }
+    }
+
+    private String formatDate(String iso) {
+        if (iso == null || iso.isBlank()) {
+            return "-";
+        }
+        try {
+            return LocalDateTime.parse(iso).format(DISPLAY_DATE);
+        } catch (Exception e) {
+            return iso;
         }
     }
 }

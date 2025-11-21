@@ -3,6 +3,7 @@ package com.dofus.rentabilizer.domain;
 public record SessionRecord(
         long id,
         String zoneName,
+        String position,
         String startedAtIso,
         String endedAtIso,
         int durationMinutes,

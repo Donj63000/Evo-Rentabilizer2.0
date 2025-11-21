@@ -5,6 +5,7 @@ import picocli.CommandLine;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 @CommandLine.Command(
         name = "add",
@@ -23,6 +24,9 @@ public class AddSessionCommand implements Runnable {
     @CommandLine.Option(names = {"-k", "--kamas"}, required = true, description = "Valeur totale en kamas (>= 0)")
     private long kamas;
 
+    @CommandLine.Option(names = {"--pos", "--position"}, description = "Position sur la carte (format x,y)")
+    private String position;
+
     @CommandLine.Option(names = {"--end"}, description = "Horodatage ISO de fin (par defaut: maintenant)")
     private String endTimeIso;
 
@@ -32,10 +36,10 @@ public class AddSessionCommand implements Runnable {
         LocalDateTime endedAt = parseEnd();
 
         try {
-            sessionService.addSession(zoneName, minutes, kamas, endedAt);
+            sessionService.addSession(zoneName, minutes, kamas, position, endedAt);
             double kph = (kamas * 60.0) / minutes;
-            System.out.printf("Session enregistree: %s | %d min | %d kamas | %.0f K/h%n",
-                    zoneName, minutes, kamas, kph);
+            System.out.printf("Session enregistree: %s | %d min | %d kamas | %.0f K/h%s%n",
+                    zoneName, minutes, kamas, kph, position != null ? " | pos " + position : "");
         } catch (Exception e) {
             throw new CommandLine.ExecutionException(new CommandLine(this),
                     "Impossible d'enregistrer la session: " + e.getMessage(), e);
@@ -61,6 +65,11 @@ public class AddSessionCommand implements Runnable {
         if (endTimeIso == null || endTimeIso.isBlank()) {
             return LocalDateTime.now();
         }
-        return LocalDateTime.parse(endTimeIso.trim(), ISO);
+        try {
+            return LocalDateTime.parse(endTimeIso.trim(), ISO);
+        } catch (DateTimeParseException e) {
+            throw new CommandLine.ParameterException(new CommandLine(this),
+                    "Format invalide pour --end (ex: 2024-05-01T13:45)", e);
+        }
     }
 }

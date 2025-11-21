@@ -1,11 +1,10 @@
 package com.dofus.rentabilizer.ui;
 
+import com.dofus.rentabilizer.domain.SessionRecord;
 import com.dofus.rentabilizer.service.SessionService;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 public class MainWindow extends JFrame {
     private static final String CARD_MENU = "menu";
@@ -38,17 +37,6 @@ public class MainWindow extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setPaint(new GradientPaint(0, 0, ThemePalette.NIGHT, 0, getHeight(), ThemePalette.OBSIDIAN));
                 g2.fillRect(0, 0, getWidth(), getHeight());
-                Image texture = ThemePalette.backgroundTexture();
-                if (texture != null) {
-                    Composite old = g2.getComposite();
-                    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.08f));
-                    for (int x = 0; x < getWidth(); x += texture.getWidth(null)) {
-                        for (int y = 0; y < getHeight(); y += texture.getHeight(null)) {
-                            g2.drawImage(texture, x, y, null);
-                        }
-                    }
-                    g2.setComposite(old);
-                }
                 g2.dispose();
             }
         };
@@ -133,7 +121,7 @@ public class MainWindow extends JFrame {
 
     private JComponent buildCards() {
         cardPanel.setOpaque(false);
-        cardPanel.setBorder(BorderFactory.createEmptyBorder(24, 32, 32, 32));
+        cardPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         cardPanel.add(buildMenuScreen(), CARD_MENU);
         cardPanel.add(buildHistoryScreen(), CARD_HISTORY);
         cardPanel.add(buildStatsScreen(), CARD_STATS);
@@ -143,15 +131,40 @@ public class MainWindow extends JFrame {
     }
 
     private JComponent buildMenuScreen() {
-        JPanel screen = new JPanel(new GridBagLayout());
-        screen.setOpaque(false);
+        JPanel screen = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                Image bg = ThemePalette.menuBackgroundTexture();
+                if (bg != null) {
+                    int w = getWidth();
+                    int h = getHeight();
+                    int imgW = bg.getWidth(null);
+                    int imgH = bg.getHeight(null);
+                    if (w > 0 && h > 0 && imgW > 0 && imgH > 0) {
+                        double scale = Math.max((double) w / imgW, (double) h / imgH);
+                        int drawW = (int) (imgW * scale);
+                        int drawH = (int) (imgH * scale);
+                        int x = (w - drawW) / 2;
+                        int y = (h - drawH) / 2;
+                        g2.drawImage(bg, x, y, drawW, drawH, null);
+                    }
+                }
+                g2.setPaint(new GradientPaint(0, 0, new Color(10, 14, 18, 120),
+                        0, getHeight(), new Color(12, 20, 28, 160)));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+            }
+        };
+        screen.setOpaque(true);
 
         RoundedPanel gridWrapper = new RoundedPanel(30);
-        gridWrapper.setFill(new Color(22, 32, 42, 220));
+        gridWrapper.setFill(new Color(22, 32, 42, 180));
         gridWrapper.setLayout(new BorderLayout());
         gridWrapper.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
 
-        JPanel grid = new JPanel(new GridLayout(2, 2, 28, 28));
+        JPanel grid = new JPanel(new GridLayout(2, 2, 24, 24));
         grid.setOpaque(false);
         grid.add(new MenuCard("Mode farm", "Lancer une session instantanement", "\u2694", this::showFarm));
         grid.add(new MenuCard("Infos zones", "Classement des meilleures zones", "\u2699", this::showStats));
@@ -176,18 +189,46 @@ public class MainWindow extends JFrame {
         return buildContentScreen("Historique des sessions",
                 "Suivez vos derniers runs en detail et analysez les ratios K/h.",
                 container,
-                null);
+                null,
+                false);
     }
 
     private JComponent buildStatsScreen() {
-        JPanel container = new JPanel(new BorderLayout());
-        container.setOpaque(false);
-        container.add(buildStatsToolbar(), BorderLayout.NORTH);
-        container.add(statsPanel, BorderLayout.CENTER);
+        JPanel content = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                Image bg = ThemePalette.statsBackgroundTexture();
+                if (bg != null) {
+                    int w = getWidth();
+                    int h = getHeight();
+                    int imgW = bg.getWidth(null);
+                    int imgH = bg.getHeight(null);
+                    if (w > 0 && h > 0 && imgW > 0 && imgH > 0) {
+                        double scale = Math.max((double) w / imgW, (double) h / imgH);
+                        int drawW = (int) (imgW * scale);
+                        int drawH = (int) (imgH * scale);
+                        int x = (w - drawW) / 2;
+                        int y = (h - drawH) / 2;
+                        g2.drawImage(bg, x, y, drawW, drawH, null);
+                    }
+                }
+                g2.setPaint(new GradientPaint(0, 0, new Color(8, 14, 20, 90),
+                        0, getHeight(), new Color(12, 20, 28, 130)));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+            }
+        };
+        content.setOpaque(true);
+        content.setLayout(new BorderLayout());
+        content.add(buildStatsToolbar(), BorderLayout.NORTH);
+        content.add(statsPanel, BorderLayout.CENTER);
         return buildContentScreen("Informations sur les zones",
                 "Classement dynamique des zones en fonction de votre experience.",
-                container,
-                null);
+                content,
+                null,
+                true);
     }
 
     private JComponent buildPlaceholderScreen(String title, String description) {
@@ -209,15 +250,15 @@ public class MainWindow extends JFrame {
         card.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
         card.add(placeholder, BorderLayout.CENTER);
 
-        return buildContentScreen(title, "Cette section arrive bientot.", card, null);
+        return buildContentScreen(title, "Cette section arrive bientot.", card, null, false);
     }
 
-    private JComponent buildContentScreen(String title, String description, JComponent content, Runnable backAction) {
+    private JComponent buildContentScreen(String title, String description, JComponent content, Runnable backAction, boolean translucent) {
         JPanel container = new JPanel(new BorderLayout());
         container.setOpaque(false);
 
         RoundedPanel topBar = new RoundedPanel(24);
-        topBar.setFill(new Color(30, 44, 53, 235));
+        topBar.setFill(translucent ? new Color(30, 44, 53, 170) : new Color(30, 44, 53, 235));
         topBar.setLayout(new BorderLayout());
         topBar.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
 
@@ -248,7 +289,7 @@ public class MainWindow extends JFrame {
         topBar.add(titles, BorderLayout.CENTER);
 
         RoundedPanel bodyWrapper = new RoundedPanel(26);
-        bodyWrapper.setFill(new Color(24, 32, 40, 235));
+        bodyWrapper.setFill(translucent ? new Color(24, 32, 40, 170) : new Color(24, 32, 40, 235));
         bodyWrapper.setLayout(new BorderLayout());
         bodyWrapper.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
         bodyWrapper.add(content, BorderLayout.CENTER);
@@ -310,7 +351,7 @@ public class MainWindow extends JFrame {
         JPanel footer = new JPanel();
         footer.setBackground(ThemePalette.OBSIDIAN);
         footer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        JLabel label = new JLabel("Dofus Retro Rentabilizer • Toutes les donnees restent sur votre machine");
+        JLabel label = new JLabel("Dofus Retro Rentabilizer • Toutes les donnees restent sur votre machine • © Guilde Evolution");
         label.setForeground(ThemePalette.TEXT_SECONDARY);
         label.setFont(ThemePalette.bodyFont());
         footer.add(label);

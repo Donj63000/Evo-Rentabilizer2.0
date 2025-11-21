@@ -40,10 +40,35 @@ public class ZoneStatsPanel extends JPanel {
     private final JLabel bestZoneHelper = createHelperLabel("Aucune donnee disponible");
 
     public ZoneStatsPanel() {
-        setOpaque(false);
+        setOpaque(true);
         setLayout(new BorderLayout(0, 18));
         add(buildHighlightsRow(), BorderLayout.NORTH);
         add(buildTableSection(), BorderLayout.CENTER);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        Image bg = ThemePalette.statsBackgroundTexture();
+        if (bg != null) {
+            int w = getWidth();
+            int h = getHeight();
+            int imgW = bg.getWidth(null);
+            int imgH = bg.getHeight(null);
+            if (w > 0 && h > 0 && imgW > 0 && imgH > 0) {
+                double scale = Math.max((double) w / imgW, (double) h / imgH);
+                int drawW = (int) (imgW * scale);
+                int drawH = (int) (imgH * scale);
+                int x = (w - drawW) / 2;
+                int y = (h - drawH) / 2;
+                g2.drawImage(bg, x, y, drawW, drawH, null);
+            }
+        }
+        g2.setPaint(new GradientPaint(0, 0, new Color(10, 18, 26, 110),
+                0, getHeight(), new Color(16, 26, 34, 150)));
+        g2.fillRect(0, 0, getWidth(), getHeight());
+        g2.dispose();
     }
 
     public void setStats(List<ZoneStatsRecord> stats) {
@@ -119,7 +144,7 @@ public class ZoneStatsPanel extends JPanel {
 
     private RoundedPanel metricCard(String title, JLabel valueLabel, JLabel helperLabel) {
         RoundedPanel card = new RoundedPanel(30);
-        card.setGradient(new Color(36, 56, 66, 230), new Color(20, 30, 38, 220));
+        card.setGradient(new Color(36, 56, 66, 150), new Color(20, 30, 38, 150));
         card.setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
         card.setLayout(new BorderLayout(0, 8));
 
@@ -135,7 +160,7 @@ public class ZoneStatsPanel extends JPanel {
 
     private JComponent buildTableSection() {
         RoundedPanel wrapper = new RoundedPanel(32);
-        wrapper.setGradient(new Color(18, 30, 38, 230), new Color(12, 20, 28, 220));
+        wrapper.setGradient(new Color(18, 30, 38, 120), new Color(12, 20, 28, 130));
         wrapper.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
         wrapper.setLayout(new BorderLayout());
 
@@ -158,7 +183,8 @@ public class ZoneStatsPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(60, 90, 100)));
         scrollPane.setOpaque(false);
-        scrollPane.getViewport().setBackground(ThemePalette.NIGHT);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.getViewport().setBackground(new Color(0, 0, 0, 0));
 
         tableCardContainer.setOpaque(false);
         tableCardContainer.add(scrollPane, CARD_TABLE);
@@ -266,7 +292,7 @@ public class ZoneStatsPanel extends JPanel {
                 Object modelValue = table.getModel().getValueAt(modelRow, modelColumn);
                 setText(formatCellValue(modelColumn, modelValue));
                 if (!isSelected) {
-                    setBackground(row % 2 == 0 ? new Color(18, 28, 36) : new Color(24, 34, 42));
+                    setBackground(row % 2 == 0 ? new Color(18, 28, 36, 170) : new Color(24, 34, 42, 170));
                     setForeground(ThemePalette.TEXT_PRIMARY);
                 }
                 setBorder(new EmptyBorder(4, 6, 4, 6));

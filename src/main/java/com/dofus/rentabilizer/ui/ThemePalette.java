@@ -15,6 +15,9 @@ public final class ThemePalette {
     public static final Color TEXT_SECONDARY = new Color(206, 200, 182);
     public static final Color PANEL = new Color(25, 34, 44, 230);
     private static Image backgroundTexture;
+    private static Image modeFarmBackgroundTexture;
+    private static Image statsBackgroundTexture;
+    private static Image menuBackgroundTexture;
     private static Font titleFont;
     private static Font subtitleFont;
     private static Font bodyFont;
@@ -51,6 +54,36 @@ public final class ThemePalette {
             }
         }
         return backgroundTexture;
+    }
+
+    public static Image farmBackgroundTexture() {
+        if (modeFarmBackgroundTexture == null) {
+            URL url = ThemePalette.class.getResource("/img_1.png");
+            if (url != null) {
+                modeFarmBackgroundTexture = new ImageIcon(url).getImage();
+            }
+        }
+        return modeFarmBackgroundTexture;
+    }
+
+    public static Image statsBackgroundTexture() {
+        if (statsBackgroundTexture == null) {
+            URL url = ThemePalette.class.getResource("/img_2.png");
+            if (url != null) {
+                statsBackgroundTexture = new ImageIcon(url).getImage();
+            }
+        }
+        return statsBackgroundTexture;
+    }
+
+    public static Image menuBackgroundTexture() {
+        if (menuBackgroundTexture == null) {
+            URL url = ThemePalette.class.getResource("/img_3.png");
+            if (url != null) {
+                menuBackgroundTexture = new ImageIcon(url).getImage();
+            }
+        }
+        return menuBackgroundTexture;
     }
 
     public static Icon logoIcon(int width, int height) {

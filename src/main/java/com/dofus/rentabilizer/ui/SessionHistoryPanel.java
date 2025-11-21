@@ -7,11 +7,18 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class SessionHistoryPanel extends JPanel {
-    private static final String[] COLUMNS = {"ID", "Zone", "Debut", "Fin", "Minutes", "Kamas", "K/h"};
+    private static final String[] COLUMNS = {"ID", "Zone", "Pos", "Debut", "Fin", "Minutes", "Kamas", "K/h"};
+    private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private final DefaultTableModel model = new DefaultTableModel(COLUMNS, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
@@ -42,8 +49,9 @@ public class SessionHistoryPanel extends JPanel {
             model.addRow(new Object[]{
                     session.id(),
                     session.zoneName(),
-                    session.startedAtIso(),
-                    session.endedAtIso(),
+                    session.position() == null ? "-" : session.position(),
+                    formatDate(session.startedAtIso()),
+                    formatDate(session.endedAtIso()),
                     session.durationMinutes(),
                     session.kamasTotal(),
                     String.format("%.0f", session.kamasPerHour())
@@ -72,6 +80,20 @@ public class SessionHistoryPanel extends JPanel {
         });
     }
 
+    public void addSessionActivateListener(Consumer<SessionRecord> listener) {
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    SessionRecord session = getSelectedSession();
+                    if (session != null) {
+                        listener.accept(session);
+                    }
+                }
+            }
+        });
+    }
+
     private DefaultTableCellRenderer zebraRenderer() {
         return new DefaultTableCellRenderer() {
             @Override
@@ -85,5 +107,16 @@ public class SessionHistoryPanel extends JPanel {
                 return c;
             }
         };
+    }
+
+    private String formatDate(String iso) {
+        if (iso == null || iso.isBlank()) {
+            return "-";
+        }
+        try {
+            return LocalDateTime.parse(iso).format(DISPLAY_DATE);
+        } catch (DateTimeParseException e) {
+            return iso;
+        }
     }
 }

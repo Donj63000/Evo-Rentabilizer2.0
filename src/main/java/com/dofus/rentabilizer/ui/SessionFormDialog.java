@@ -126,7 +126,7 @@ public class SessionFormDialog extends JDialog {
                 return;
             }
 
-            sessionService.addSession(zone, minutes, kamas, LocalDateTime.now());
+            sessionService.addSession(zone, minutes, kamas, null, LocalDateTime.now());
             if (onSuccess != null) {
                 onSuccess.run();
             }
