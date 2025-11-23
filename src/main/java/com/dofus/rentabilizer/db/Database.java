@@ -44,11 +44,13 @@ public final class Database {
                       duration_minutes  INTEGER NOT NULL CHECK (duration_minutes > 0),
                       kamas_total       INTEGER NOT NULL CHECK (kamas_total >= 0),
                       position          TEXT,
+                      note              TEXT,
                       FOREIGN KEY(zone_id) REFERENCES zones(id) ON DELETE CASCADE
                     );
                     """);
             statement.execute("CREATE INDEX IF NOT EXISTS idx_sessions_zone ON sessions(zone_id)");
             ensureSessionPositionColumn(connection);
+            ensureSessionNoteColumn(connection);
         } catch (SQLException e) {
             throw new IllegalStateException("Initialisation de la base de donnees impossible", e);
         }
@@ -114,6 +116,25 @@ public final class Database {
         if (!hasPosition) {
             try (Statement alter = connection.createStatement()) {
                 alter.execute("ALTER TABLE sessions ADD COLUMN position TEXT");
+            }
+        }
+    }
+
+    private static void ensureSessionNoteColumn(Connection connection) throws SQLException {
+        boolean hasNote = false;
+        try (PreparedStatement ps = connection.prepareStatement("PRAGMA table_info('sessions')");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String name = rs.getString("name");
+                if ("note".equalsIgnoreCase(name)) {
+                    hasNote = true;
+                    break;
+                }
+            }
+        }
+        if (!hasNote) {
+            try (Statement alter = connection.createStatement()) {
+                alter.execute("ALTER TABLE sessions ADD COLUMN note TEXT");
             }
         }
     }

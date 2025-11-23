@@ -18,6 +18,8 @@ public class MainWindow extends JFrame {
     private final ZoneStatsPanel statsPanel = new ZoneStatsPanel();
     private final ModeFarmPanel modeFarmPanel =
             new ModeFarmPanel(sessionService, this::showMenu, this::handleSessionSaved);
+    private HelpDialog helpDialog;
+    private ZoneStatsChartDialog statsChartDialog;
     private final JPanel cardPanel = new JPanel(new CardLayout());
 
     public MainWindow() {
@@ -125,7 +127,7 @@ public class MainWindow extends JFrame {
         cardPanel.add(buildMenuScreen(), CARD_MENU);
         cardPanel.add(buildHistoryScreen(), CARD_HISTORY);
         cardPanel.add(buildStatsScreen(), CARD_STATS);
-        cardPanel.add(buildPlaceholderScreen("Options", "Reglages et exports arrives tres prochainement."), CARD_OPTIONS);
+        cardPanel.add(buildOptionsScreen(), CARD_OPTIONS);
         cardPanel.add(modeFarmPanel, CARD_FARM);
         return cardPanel;
     }
@@ -253,6 +255,68 @@ public class MainWindow extends JFrame {
         return buildContentScreen(title, "Cette section arrive bientot.", card, null, false);
     }
 
+    private JComponent buildOptionsScreen() {
+        JPanel container = new JPanel(new BorderLayout());
+        container.setOpaque(false);
+
+        RoundedPanel card = new RoundedPanel(24);
+        card.setGradient(new Color(42, 70, 82, 220), new Color(30, 48, 58, 230));
+        card.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
+        card.setLayout(new BorderLayout(12, 12));
+
+        JLabel title = new JLabel("Centre d'aide et reglages rapides");
+        title.setForeground(ThemePalette.TEXT_PRIMARY);
+        title.setFont(ThemePalette.subtitleFont().deriveFont(Font.BOLD, 18f));
+
+        JLabel description = new JLabel("<html><div style='width: 520px'>Accedez au guide complet, aux commandes CLI et aux bonnes pratiques pour garder vos donnees fiables.</div></html>");
+        description.setForeground(ThemePalette.TEXT_SECONDARY);
+        description.setFont(ThemePalette.bodyFont());
+
+        JPanel header = new JPanel();
+        header.setOpaque(false);
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.add(title);
+        header.add(Box.createVerticalStrut(6));
+        header.add(description);
+
+        RoundedPanel quickActions = new RoundedPanel(18);
+        quickActions.setGradient(new Color(60, 96, 108, 230), new Color(40, 70, 82, 230));
+        quickActions.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
+        quickActions.setLayout(new BorderLayout(10, 10));
+
+        JLabel helpTitle = new JLabel("Aide \u00e0 l'utilisation");
+        helpTitle.setForeground(ThemePalette.TEXT_PRIMARY);
+        helpTitle.setFont(ThemePalette.subtitleFont().deriveFont(Font.BOLD, 16f));
+
+        JLabel helpDesc = new JLabel("<html>Un guide detaille pour ajouter des sessions, consulter les stats et utiliser le CLI.</html>");
+        helpDesc.setForeground(ThemePalette.TEXT_SECONDARY);
+        helpDesc.setFont(ThemePalette.bodyFont());
+
+        JButton helpButton = UiComponents.primaryButton("Aide \u00e0 l'utilisation");
+        helpButton.addActionListener(e -> openHelpDialog());
+
+        JPanel helpHeader = new JPanel(new BorderLayout());
+        helpHeader.setOpaque(false);
+        helpHeader.add(helpTitle, BorderLayout.WEST);
+
+        JPanel helpContent = new JPanel(new BorderLayout());
+        helpContent.setOpaque(false);
+        helpContent.add(helpDesc, BorderLayout.CENTER);
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actions.setOpaque(false);
+        actions.add(helpButton);
+        helpContent.add(actions, BorderLayout.EAST);
+
+        quickActions.add(helpHeader, BorderLayout.NORTH);
+        quickActions.add(helpContent, BorderLayout.CENTER);
+
+        card.add(header, BorderLayout.NORTH);
+        card.add(quickActions, BorderLayout.CENTER);
+
+        container.add(card, BorderLayout.CENTER);
+        return buildContentScreen("Options", "Ajustez le logiciel et retrouvez l'aide en un clic.", container, null, false);
+    }
+
     private JComponent buildContentScreen(String title, String description, JComponent content, Runnable backAction, boolean translucent) {
         JPanel container = new JPanel(new BorderLayout());
         container.setOpaque(false);
@@ -340,10 +404,16 @@ public class MainWindow extends JFrame {
         panel.setLayout(new BorderLayout(12, 0));
         JLabel info = new JLabel("Classement calcule uniquement sur vos donnees enregistrées.");
         info.setForeground(ThemePalette.TEXT_PRIMARY);
-        panel.add(info, BorderLayout.WEST);
+        panel.add(info, BorderLayout.CENTER);
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actions.setOpaque(false);
+        JButton chart = UiComponents.primaryButton("Graphique");
+        chart.addActionListener(e -> openStatsChart());
         JButton refresh = UiComponents.ghostButton("Actualiser");
         refresh.addActionListener(e -> refreshData());
-        panel.add(refresh, BorderLayout.EAST);
+        actions.add(chart);
+        actions.add(refresh);
+        panel.add(actions, BorderLayout.EAST);
         return panel;
     }
 
@@ -424,6 +494,9 @@ public class MainWindow extends JFrame {
         try {
             historyPanel.setSessions(sessionService.latestSessions(25));
             statsPanel.setStats(sessionService.zoneStats());
+            if (statsChartDialog != null && statsChartDialog.isVisible()) {
+                statsChartDialog.setStats(statsPanel.getCurrentStats());
+            }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "Impossible de charger les donnees: " + e.getMessage(),
@@ -434,5 +507,20 @@ public class MainWindow extends JFrame {
 
     private void handleSessionSaved() {
         refreshData();
+    }
+
+    private void openStatsChart() {
+        if (statsChartDialog == null) {
+            statsChartDialog = new ZoneStatsChartDialog(this);
+        }
+        statsChartDialog.setStats(statsPanel.getCurrentStats());
+        statsChartDialog.setVisible(true);
+    }
+
+    private void openHelpDialog() {
+        if (helpDialog == null) {
+            helpDialog = new HelpDialog(this);
+        }
+        helpDialog.setVisible(true);
     }
 }

@@ -27,6 +27,9 @@ public class AddSessionCommand implements Runnable {
     @CommandLine.Option(names = {"--pos", "--position"}, description = "Position sur la carte (format x,y)")
     private String position;
 
+    @CommandLine.Option(names = {"-c", "--note"}, description = "Note sur la session (optionnel)")
+    private String note;
+
     @CommandLine.Option(names = {"--end"}, description = "Horodatage ISO de fin (par defaut: maintenant)")
     private String endTimeIso;
 
@@ -36,10 +39,14 @@ public class AddSessionCommand implements Runnable {
         LocalDateTime endedAt = parseEnd();
 
         try {
-            sessionService.addSession(zoneName, minutes, kamas, position, endedAt);
+            sessionService.addSession(zoneName, minutes, kamas, position, endedAt, note);
             double kph = (kamas * 60.0) / minutes;
             System.out.printf("Session enregistree: %s | %d min | %d kamas | %.0f K/h%s%n",
-                    zoneName, minutes, kamas, kph, position != null ? " | pos " + position : "");
+                    zoneName,
+                    minutes,
+                    kamas,
+                    kph,
+                    buildExtras());
         } catch (Exception e) {
             throw new CommandLine.ExecutionException(new CommandLine(this),
                     "Impossible d'enregistrer la session: " + e.getMessage(), e);
@@ -71,5 +78,16 @@ public class AddSessionCommand implements Runnable {
             throw new CommandLine.ParameterException(new CommandLine(this),
                     "Format invalide pour --end (ex: 2024-05-01T13:45)", e);
         }
+    }
+
+    private String buildExtras() {
+        StringBuilder extras = new StringBuilder();
+        if (position != null && !position.isBlank()) {
+            extras.append(" | pos ").append(position.trim());
+        }
+        if (note != null && !note.isBlank()) {
+            extras.append(" | note: ").append(note.trim());
+        }
+        return extras.toString();
     }
 }

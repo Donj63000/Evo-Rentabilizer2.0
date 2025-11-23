@@ -13,6 +13,7 @@ public class SessionFormDialog extends JDialog {
     private final JTextField zoneField = new JTextField();
     private final JSpinner minutesSpinner = new JSpinner(new SpinnerNumberModel(30, 1, 600, 1));
     private final JSpinner kamasSpinner = new JSpinner(new SpinnerNumberModel(10000, 0, 50_000_000, 100));
+    private final JTextArea noteArea = new JTextArea(3, 20);
 
     public SessionFormDialog(Frame owner, SessionService sessionService, Runnable onSuccess) {
         super(owner, "Nouvelle session", true);
@@ -75,6 +76,16 @@ public class SessionFormDialog extends JDialog {
         stylizeSpinner(kamasSpinner);
         content.add(kamasSpinner, gbc);
 
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        addLabel(content, gbc, "Note sur la session ?");
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        JScrollPane noteScroll = new JScrollPane(noteArea);
+        styleNoteArea(noteArea, noteScroll);
+        content.add(noteScroll, gbc);
+
         add(content, BorderLayout.CENTER);
         add(buildButtons(), BorderLayout.SOUTH);
 
@@ -114,6 +125,16 @@ public class SessionFormDialog extends JDialog {
         }
     }
 
+    private void styleNoteArea(JTextArea area, JScrollPane scrollPane) {
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setBackground(ThemePalette.NIGHT);
+        area.setForeground(ThemePalette.TEXT_PRIMARY);
+        area.setCaretColor(ThemePalette.TEXT_PRIMARY);
+        area.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+        scrollPane.setBorder(BorderFactory.createLineBorder(ThemePalette.EMERALD.darker()));
+    }
+
     private void onSave() {
         try {
             String zone = zoneField.getText().trim();
@@ -126,7 +147,8 @@ public class SessionFormDialog extends JDialog {
                 return;
             }
 
-            sessionService.addSession(zone, minutes, kamas, null, LocalDateTime.now());
+            String note = noteArea.getText();
+            sessionService.addSession(zone, minutes, kamas, null, LocalDateTime.now(), note);
             if (onSuccess != null) {
                 onSuccess.run();
             }

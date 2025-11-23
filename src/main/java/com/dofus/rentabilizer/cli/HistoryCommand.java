@@ -29,11 +29,11 @@ public class HistoryCommand implements Runnable {
 
         try {
             List<SessionRecord> sessions = sessionService.latestSessions(limit);
-            System.out.printf("%-5s %-24s %-10s %-19s %-19s %8s %12s %8s%n",
-                    "ID", "Zone", "Pos", "Debut", "Fin", "Min", "Kamas", "K/h");
-            System.out.println("----------------------------------------------------------------------------------------------------------------");
+            System.out.printf("%-5s %-24s %-10s %-19s %-19s %8s %12s %8s %-32s%n",
+                    "ID", "Zone", "Pos", "Debut", "Fin", "Min", "Kamas", "K/h", "Note");
+            System.out.println("--------------------------------------------------------------------------------------------------------------------------------");
             for (SessionRecord session : sessions) {
-                System.out.printf("%-5d %-24s %-10s %-19s %-19s %8d %12d %8.0f%n",
+                System.out.printf("%-5d %-24s %-10s %-19s %-19s %8d %12d %8.0f %-32s%n",
                         session.id(),
                         session.zoneName(),
                         session.position() == null ? "-" : session.position(),
@@ -41,7 +41,8 @@ public class HistoryCommand implements Runnable {
                         formatDate(session.endedAtIso()),
                         session.durationMinutes(),
                         session.kamasTotal(),
-                        session.kamasPerHour());
+                        session.kamasPerHour(),
+                        formatNote(session.note()));
             }
         } catch (Exception e) {
             throw new CommandLine.ExecutionException(new CommandLine(this),
@@ -58,5 +59,16 @@ public class HistoryCommand implements Runnable {
         } catch (Exception e) {
             return iso;
         }
+    }
+
+    private String formatNote(String note) {
+        if (note == null || note.isBlank()) {
+            return "-";
+        }
+        String trimmed = note.trim();
+        if (trimmed.length() > 32) {
+            return trimmed.substring(0, 29) + "...";
+        }
+        return trimmed;
     }
 }

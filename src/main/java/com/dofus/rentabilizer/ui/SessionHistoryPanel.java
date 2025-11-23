@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class SessionHistoryPanel extends JPanel {
-    private static final String[] COLUMNS = {"ID", "Zone", "Pos", "Debut", "Fin", "Minutes", "Kamas", "K/h"};
+    private static final String[] COLUMNS = {"ID", "Zone", "Pos", "Debut", "Fin", "Minutes", "Kamas", "K/h", "Note"};
     private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private final DefaultTableModel model = new DefaultTableModel(COLUMNS, 0) {
         @Override
@@ -36,6 +36,7 @@ public class SessionHistoryPanel extends JPanel {
         table.setModel(model);
         table.setDefaultRenderer(Object.class, zebraRenderer());
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.getColumnModel().getColumn(8).setPreferredWidth(260);
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, ThemePalette.EMERALD));
         scrollPane.getViewport().setBackground(ThemePalette.NIGHT);
@@ -54,7 +55,8 @@ public class SessionHistoryPanel extends JPanel {
                     formatDate(session.endedAtIso()),
                     session.durationMinutes(),
                     session.kamasTotal(),
-                    String.format("%.0f", session.kamasPerHour())
+                    String.format("%.0f", session.kamasPerHour()),
+                    formatNote(session.note())
             });
         }
         table.clearSelection();
@@ -118,5 +120,16 @@ public class SessionHistoryPanel extends JPanel {
         } catch (DateTimeParseException e) {
             return iso;
         }
+    }
+
+    private String formatNote(String note) {
+        if (note == null || note.isBlank()) {
+            return "-";
+        }
+        String trimmed = note.trim();
+        if (trimmed.length() > 80) {
+            return trimmed.substring(0, 77) + "...";
+        }
+        return trimmed;
     }
 }

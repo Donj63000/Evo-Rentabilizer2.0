@@ -18,6 +18,7 @@ public class ZoneStatsPanel extends JPanel {
     private static final String CARD_TABLE = "table";
     private static final String CARD_EMPTY = "empty";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM HH:mm");
+    private List<ZoneStatsRecord> currentStats = List.of();
 
     private final DefaultTableModel model = new DefaultTableModel(COLUMNS, 0) {
         @Override
@@ -72,6 +73,7 @@ public class ZoneStatsPanel extends JPanel {
     }
 
     public void setStats(List<ZoneStatsRecord> stats) {
+        currentStats = stats == null ? List.of() : List.copyOf(stats);
         model.setRowCount(0);
         long totalSessions = 0;
         long totalMinutes = 0;
@@ -79,7 +81,7 @@ public class ZoneStatsPanel extends JPanel {
         LocalDateTime latestSession = null;
         ZoneStatsRecord bestZone = null;
 
-        for (ZoneStatsRecord stat : stats) {
+        for (ZoneStatsRecord stat : currentStats) {
             LocalDateTime lastSession = parseIsoDate(stat.lastSessionIso());
             model.addRow(new Object[]{
                     stat.zoneName(),
@@ -100,12 +102,16 @@ public class ZoneStatsPanel extends JPanel {
             }
         }
 
-        if (stats.isEmpty()) {
+        if (currentStats.isEmpty()) {
             tableCardLayout.show(tableCardContainer, CARD_EMPTY);
         } else {
             tableCardLayout.show(tableCardContainer, CARD_TABLE);
         }
-        updateSummary(totalSessions, totalMinutes, totalKamas, bestZone, stats.size(), latestSession);
+        updateSummary(totalSessions, totalMinutes, totalKamas, bestZone, currentStats.size(), latestSession);
+    }
+
+    public List<ZoneStatsRecord> getCurrentStats() {
+        return currentStats;
     }
 
     private void updateSummary(long totalSessions, long totalMinutes, long totalKamas, ZoneStatsRecord bestZone,

@@ -7,7 +7,8 @@ public record SessionRecord(
         String startedAtIso,
         String endedAtIso,
         int durationMinutes,
-        long kamasTotal
+        long kamasTotal,
+        String note
 ) {
 
     public double kamasPerHour() {

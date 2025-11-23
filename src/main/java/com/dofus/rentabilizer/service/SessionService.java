@@ -18,7 +18,7 @@ import java.util.List;
 public class SessionService {
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-    public void addSession(String zoneName, int minutes, long kamas, String position, LocalDateTime endedAt) throws SQLException {
+    public void addSession(String zoneName, int minutes, long kamas, String position, LocalDateTime endedAt, String note) throws SQLException {
         if (minutes <= 0) {
             throw new IllegalArgumentException("La duree doit etre superieure a 0");
         }
@@ -26,13 +26,14 @@ public class SessionService {
             throw new IllegalArgumentException("Les kamas doivent etre positifs");
         }
         String normalizedPosition = normalizePosition(position);
+        String normalizedNote = normalizeNote(note);
 
         LocalDateTime start = endedAt.minusMinutes(minutes);
         long zoneId = Database.upsertZone(zoneName);
 
         String sql = """
-                INSERT INTO sessions(zone_id, started_at, ended_at, duration_minutes, kamas_total, position)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO sessions(zone_id, started_at, ended_at, duration_minutes, kamas_total, position, note)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection connection = Database.newConnectionWithForeignKeys();
@@ -43,8 +44,13 @@ public class SessionService {
             ps.setInt(4, minutes);
             ps.setLong(5, kamas);
             ps.setString(6, normalizedPosition);
+            ps.setString(7, normalizedNote);
             ps.executeUpdate();
         }
+    }
+
+    public void addSession(String zoneName, int minutes, long kamas, String position, LocalDateTime endedAt) throws SQLException {
+        addSession(zoneName, minutes, kamas, position, endedAt, null);
     }
 
     public List<SessionRecord> latestSessions(int limit) throws SQLException {
@@ -59,7 +65,8 @@ public class SessionService {
                        s.started_at,
                        s.ended_at,
                        s.duration_minutes,
-                       s.kamas_total
+                       s.kamas_total,
+                       s.note
                 FROM sessions s
                 JOIN zones z ON z.id = s.zone_id
                 ORDER BY s.ended_at DESC, s.id DESC
@@ -79,7 +86,8 @@ public class SessionService {
                             rs.getString("started_at"),
                             rs.getString("ended_at"),
                             rs.getInt("duration_minutes"),
-                            rs.getLong("kamas_total")
+                            rs.getLong("kamas_total"),
+                            rs.getString("note")
                     ));
                 }
             }
@@ -158,7 +166,7 @@ public class SessionService {
         }
     }
 
-    public void updateSession(long sessionId, String zoneName, int minutes, long kamas, String position, LocalDateTime endedAt) throws SQLException {
+    public void updateSession(long sessionId, String zoneName, int minutes, long kamas, String position, LocalDateTime endedAt, String note) throws SQLException {
         if (minutes <= 0) {
             throw new IllegalArgumentException("La duree doit etre superieure a 0");
         }
@@ -169,12 +177,13 @@ public class SessionService {
             throw new IllegalArgumentException("La zone est obligatoire");
         }
         String normalizedPosition = normalizePosition(position);
+        String normalizedNote = normalizeNote(note);
         LocalDateTime start = endedAt.minusMinutes(minutes);
         long zoneId = Database.upsertZone(zoneName);
 
         String sql = """
                 UPDATE sessions
-                SET zone_id = ?, started_at = ?, ended_at = ?, duration_minutes = ?, kamas_total = ?, position = ?
+                SET zone_id = ?, started_at = ?, ended_at = ?, duration_minutes = ?, kamas_total = ?, position = ?, note = ?
                 WHERE id = ?
                 """;
 
@@ -186,12 +195,17 @@ public class SessionService {
             ps.setInt(4, minutes);
             ps.setLong(5, kamas);
             ps.setString(6, normalizedPosition);
-            ps.setLong(7, sessionId);
+            ps.setString(7, normalizedNote);
+            ps.setLong(8, sessionId);
             int updated = ps.executeUpdate();
             if (updated == 0) {
                 throw new SQLException("Session introuvable: " + sessionId);
             }
         }
+    }
+
+    public void updateSession(long sessionId, String zoneName, int minutes, long kamas, String position, LocalDateTime endedAt) throws SQLException {
+        updateSession(sessionId, zoneName, minutes, kamas, position, endedAt, null);
     }
 
     public LocalDateTime parseIsoDateTime(String iso) {
@@ -215,5 +229,16 @@ public class SessionService {
             throw new IllegalArgumentException("Position invalide (format attendu: x,y)");
         }
         return compact;
+    }
+
+    private String normalizeNote(String note) {
+        if (note == null) {
+            return null;
+        }
+        String trimmed = note.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        return trimmed;
     }
 }
