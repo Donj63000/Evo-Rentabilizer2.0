@@ -1,0 +1,31 @@
+[2025-11-16] UI: reactivate Mode Farm duration spinners whenever no session runs.
+[2025-11-16] UI: skip auto duration overwrite after stop when user set custom time.
+[2025-11-16] UI: added gradient title label for Rentabilizer 2.0 header.
+[2025-11-16] UI: added Mode Farm zone history dropdown and backend query for suggestions.
+[2025-11-17] UI: modernized Mode Farm layout with highlight cards and status banner.
+[2025-11-17] UI: refreshed Infos zones view with summary cards and restyled stats table.
+[2025-11-17] UI/CLI: added session edit/delete actions (history toolbar, edit dialog, CLI delete command).
+[2025-11-20] UI: Infos zones now shows last session per zone, sortable table, and richer summaries.
+[2025-11-20] map: ajoute position aux sessions (CLI/UI) et ouverture rapide de la carte dofus-retro.co.
+[2025-11-21] CLI/UI: validation claire du parametre --end, historique ordonne par fin et dates lisibles, edit dialog accepte de longues durees.
+[2025-11-21] UI: ouverture de la carte possible meme sans position (ouvre la page principale).
+[2025-11-21] UI: suppression des champs de saisie de position dans Mode farm et les formulaires session.
+[2025-11-21] UI: fond d'ecran img_1.png applique a la page Mode farm.
+[2025-11-21] UI: transparence adoucie sur Mode farm pour mieux afficher l'arriere-plan.
+[2025-11-21] UI: ajout du copyright Guilde Evolution sur le footer.
+[2025-11-21] UI: fond d'ecran img_2.png ajoute sur Infos zones (stats).
+[2025-11-21] UI: elements Infos zones plus transparents, Mode farm et Infos zones n'affichent que leurs fonds dedies.
+[2025-11-21] UI: cartes et wrappers Infos zones adoucis, wrappers stats/farm plus translucides pour laisser ressortir les fonds img_1/img_2.
+[2025-11-21] UI: retrait de l'ancien fond img.png au profit des visuels dedies.
+[2025-11-21] UI: fonds img_1/img_2 et wrappers stats couvrent toute la zone centrale (bordures retirees).
+[2025-11-21] UI: tableau Infos zones encore allégé pour laisser percevoir le fond img_2.
+[2025-11-21] UI: viewport/ligne du tableau Infos zones rendent le fond visible (alpha + viewport transparent).
+[2025-11-21] UI: ajout du fond img_3 sur le menu principal avec overlay leger.
+[2025-11-21] UI: cartes du menu principal raffinees (icones sobres, survol contraste, bordure lumineuse, format réduit).
+[2025-11-21] UI/CLI: ajout de notes de session (saisie, historique, migration DB).
+[2025-11-21] UI: Mode farm scrollable a la molette pour acceder a tous les champs.
+[2025-11-22] docs: renforce les consignes AGENTS pour la qualite et l'effort frontend.
+[2025-11-22] UI: bouton Graphique sur Infos zones avec diagramme K/h compare entre zones.
+[2025-11-22] UI: lisibilite du graphique Infos zones (pas de chevauchement, resume responsive).
+[2025-11-22] UI: bouton Aide dans Options ouvrant un guide d'utilisation complet.
+[2025-11-22] UI: rendu HTML du guide d'aide (plus de balises affichées).
